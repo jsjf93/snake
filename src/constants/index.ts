@@ -4,3 +4,10 @@ export enum Keys {
   left = 'ArrowLeft',
   right = 'ArrowRight',
 }
+
+export enum Direction {
+  up = 'up',
+  down = 'down',
+  left = 'left',
+  right = 'right',
+}

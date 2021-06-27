@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer, useRef } from 'react';
-import { Keys } from '../../../constants';
-import { generateGrid } from '../../../helpers/generateGrid';
+import { Direction, Keys } from '../../../constants';
+import { generateGrid, move } from '../../../helpers/gridHelpers';
 import TileRow from './TileRow/TileRow';
 
 type Props = {
@@ -16,48 +16,45 @@ type Coordinates = {
 type State = {
   coordinates: Coordinates[];
   grid: number[][];
+  direction: keyof typeof Keys;
 };
 
 const initialState: State = {
-  coordinates: [{ row: 0, col: 0 }],
+  coordinates: [
+    { row: 0, col: 4 },
+    { row: 0, col: 3 },
+    { row: 0, col: 2 },
+    { row: 0, col: 1 },
+    { row: 0, col: 0 },
+  ],
   grid: [],
+  direction: 'right',
 };
 
 type Action =
   | { type: 'load'; payload: Props }
-  | { type: 'up' }
-  | { type: 'down' }
-  | { type: 'left' }
-  | { type: 'right' };
+  | { type: Direction.up }
+  | { type: Direction.down }
+  | { type: Direction.left }
+  | { type: Direction.right };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'load': {
       return { ...state, grid: generateGrid(action.payload, state.coordinates) };
     }
-    case 'up': {
-      return state;
-    }
-    case 'down': {
-      return state;
-    }
-    case 'left': {
-      return state;
-    }
+    case 'up':
+    case 'down':
+    case 'left':
     case 'right': {
-      const coordinates = [...state.coordinates].reduceRight((coords, cur, i, array) => {
-        if (i !== 0) {
-          return coords.concat(array[i - 1]);
-        }
+      const { coordinates, grid } = move(
+        action.type,
+        state.grid.length,
+        state.grid[0].length,
+        state.coordinates,
+      );
 
-        return coords.concat({ ...cur, col: cur.col + 1 });
-      }, [] as Coordinates[]);
-
-      const width = state.grid.length;
-      const height = state.grid[0].length;
-      const grid = generateGrid({ width, height }, coordinates);
-
-      return { coordinates, grid };
+      return { coordinates, grid, direction: action.type };
     }
     default: {
       throw new Error('[Grid] Action does not exist');
@@ -76,19 +73,17 @@ function Grid(props: Props) {
   }, [props]);
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    event.preventDefault();
-
-    if (event.key === Keys.up) {
-      dispatch({ type: 'up' });
+    if (event.key === Keys.up && state.direction !== 'down') {
+      dispatch({ type: Direction.up });
     }
-    if (event.key === Keys.down) {
-      dispatch({ type: 'down' });
+    if (event.key === Keys.down && state.direction !== 'up') {
+      dispatch({ type: Direction.down });
     }
-    if (event.key === Keys.left) {
-      dispatch({ type: 'left' });
+    if (event.key === Keys.left && state.direction !== 'right') {
+      dispatch({ type: Direction.left });
     }
-    if (event.key === Keys.right) {
-      dispatch({ type: 'right' });
+    if (event.key === Keys.right && state.direction !== 'left') {
+      dispatch({ type: Direction.right });
     }
   };
 
