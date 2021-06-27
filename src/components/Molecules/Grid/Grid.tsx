@@ -33,10 +33,11 @@ const initialState: State = {
 
 type Action =
   | { type: 'load'; payload: Props }
-  | { type: Direction.up }
-  | { type: Direction.down }
-  | { type: Direction.left }
-  | { type: Direction.right };
+  | { type: 'up' }
+  | { type: 'down' }
+  | { type: 'left' }
+  | { type: 'right' }
+  | { type: 'move' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -47,14 +48,17 @@ function reducer(state: State, action: Action): State {
     case 'down':
     case 'left':
     case 'right': {
+      return { ...state, direction: action.type };
+    }
+    case 'move': {
       const { coordinates, grid } = move(
-        action.type,
+        state.direction,
         state.grid.length,
         state.grid[0].length,
         state.coordinates,
       );
 
-      return { coordinates, grid, direction: action.type };
+      return { ...state, coordinates, grid };
     }
     default: {
       throw new Error('[Grid] Action does not exist');
@@ -72,17 +76,30 @@ function Grid(props: Props) {
     ref?.current?.focus();
   }, [props]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => dispatch({ type: 'move' }), 100);
+    return () => clearInterval(intervalId);
+  });
+
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === Keys.up && state.direction !== 'down') {
+    if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
       dispatch({ type: Direction.up });
     }
-    if (event.key === Keys.down && state.direction !== 'up') {
+    if (event.key === Keys.down && state.direction !== 'up' && state.direction !== Direction.down) {
       dispatch({ type: Direction.down });
     }
-    if (event.key === Keys.left && state.direction !== 'right') {
+    if (
+      event.key === Keys.left &&
+      state.direction !== 'right' &&
+      state.direction !== Direction.left
+    ) {
       dispatch({ type: Direction.left });
     }
-    if (event.key === Keys.right && state.direction !== 'left') {
+    if (
+      event.key === Keys.right &&
+      state.direction !== 'left' &&
+      state.direction !== Direction.right
+    ) {
       dispatch({ type: Direction.right });
     }
   };

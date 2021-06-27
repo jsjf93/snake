@@ -18,7 +18,7 @@ export const generateGrid = (
 };
 
 export const move = (
-  direction: Direction,
+  direction: string,
   width: number,
   height: number,
   coordinates: Coordinates[],
