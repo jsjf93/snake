@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useRef } from 'react';
 import { Direction, Keys } from '../../../constants';
-import { generateGrid, move } from '../../../helpers/gridHelpers';
-import TileRow from './TileRow/TileRow';
+import { generateGrid, move, setTarget } from '../../../helpers/gridHelpers';
+import TileRow from '../../Molecules/Grid/TileRow/TileRow';
 
 type Props = {
   width: number;
@@ -15,8 +15,10 @@ type Coordinates = {
 
 type State = {
   coordinates: Coordinates[];
+  previousTailCoordinate: Coordinates;
   grid: number[][];
   direction: keyof typeof Keys;
+  target: Coordinates;
 };
 
 const initialState: State = {
@@ -27,8 +29,10 @@ const initialState: State = {
     { row: 0, col: 1 },
     { row: 0, col: 0 },
   ],
+  previousTailCoordinate: { row: 0, col: 0 },
   grid: [],
   direction: 'right',
+  target: { row: 10, col: 10 },
 };
 
 type Action =
@@ -37,12 +41,17 @@ type Action =
   | { type: 'down' }
   | { type: 'left' }
   | { type: 'right' }
-  | { type: 'move' };
+  | { type: 'move' }
+  | { type: 'eat' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'load': {
-      return { ...state, grid: generateGrid(action.payload, state.coordinates) };
+      const grid = generateGrid(action.payload, state.coordinates, state.target);
+      return {
+        ...state,
+        ...setTarget(grid, state.coordinates),
+      };
     }
     case 'up':
     case 'down':
@@ -56,9 +65,19 @@ function reducer(state: State, action: Action): State {
         state.grid.length,
         state.grid[0].length,
         state.coordinates,
+        state.target,
       );
 
-      return { ...state, coordinates, grid };
+      const previousTailCoordinate = { ...state.coordinates[state.coordinates.length - 1] };
+
+      return { ...state, coordinates, grid, previousTailCoordinate };
+    }
+    case 'eat': {
+      return {
+        ...state,
+        coordinates: state.coordinates.concat(state.previousTailCoordinate),
+        ...setTarget(state.grid, state.coordinates),
+      };
     }
     default: {
       throw new Error('[Grid] Action does not exist');
@@ -79,7 +98,7 @@ function Grid(props: Props) {
   useEffect(() => {
     const intervalId = setInterval(() => dispatch({ type: 'move' }), 100);
     return () => clearInterval(intervalId);
-  });
+  }, []);
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
@@ -103,6 +122,13 @@ function Grid(props: Props) {
       dispatch({ type: Direction.right });
     }
   };
+
+  if (
+    state.coordinates[0].col === state.target.col &&
+    state.coordinates[0].row === state.target.row
+  ) {
+    dispatch({ type: 'eat' });
+  }
 
   return (
     <div ref={ref} tabIndex={0} onKeyDown={handleKeyPress}>

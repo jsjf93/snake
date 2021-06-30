@@ -1,5 +1,5 @@
 import { Container } from 'react-bootstrap';
-import Grid from './components/Molecules/Grid/Grid';
+import Grid from './components/Organisms/Grid/Grid';
 
 function App() {
   return (

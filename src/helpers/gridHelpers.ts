@@ -4,17 +4,42 @@ import { Coordinates } from '../types';
 export const generateGrid = (
   { width, height }: { width: number; height: number },
   coordinates: Coordinates[],
+  target: Coordinates,
 ) => {
   const grid: number[][] = [];
 
   for (let row = 0; row < width; row++) {
     grid[row] = [];
     for (let col = 0; col < height; col++) {
-      grid[row].push(+coordinates.some((c) => c.row === row && c.col === col));
+      if (target.row === row && target.col === col) {
+        grid[row][col] = 2;
+      } else {
+        grid[row].push(+coordinates.some((c) => c.row === row && c.col === col));
+      }
     }
   }
 
   return grid;
+};
+
+export const setTarget = (grid: number[][], coordinates: Coordinates[]) => {
+  const newGrid = [...grid];
+
+  let calculatingCoordinates: boolean = true;
+  let targetCoordinates: Coordinates = { row: 0, col: 0 };
+
+  while (calculatingCoordinates) {
+    const row = ~~(Math.random() * newGrid.length);
+    const col = ~~(Math.random() * newGrid[0].length);
+
+    if (coordinates.every((x) => x.row !== row && x.col !== col)) {
+      calculatingCoordinates = false;
+      newGrid[row][col] = 2;
+      targetCoordinates = { row, col };
+    }
+  }
+
+  return { grid: newGrid, target: targetCoordinates };
 };
 
 export const move = (
@@ -22,22 +47,23 @@ export const move = (
   width: number,
   height: number,
   coordinates: Coordinates[],
+  target: Coordinates,
 ) => {
   switch (direction) {
     case Direction.up:
-      return moveUp(width, height, coordinates);
+      return moveUp(width, height, coordinates, target);
     case Direction.down:
-      return moveDown(width, height, coordinates);
+      return moveDown(width, height, coordinates, target);
     case Direction.left:
-      return moveLeft(width, height, coordinates);
+      return moveLeft(width, height, coordinates, target);
     case Direction.right:
-      return moveRight(width, height, coordinates);
+      return moveRight(width, height, coordinates, target);
     default:
       throw new Error(`[GridHelpers] invalid direction: ${direction}`);
   }
 };
 
-const moveUp = (width: number, height: number, coordinates: Coordinates[]) => {
+const moveUp = (width: number, height: number, coordinates: Coordinates[], target: Coordinates) => {
   const newCoordinates = [...coordinates].reduceRight((coords, cur, i, array) => {
     if (i !== 0) {
       return [array[i - 1]].concat(coords);
@@ -50,10 +76,18 @@ const moveUp = (width: number, height: number, coordinates: Coordinates[]) => {
     return [{ ...cur, row }].concat(coords);
   }, [] as Coordinates[]);
 
-  return { grid: generateGrid({ width, height }, newCoordinates), coordinates: newCoordinates };
+  return {
+    grid: generateGrid({ width, height }, newCoordinates, target),
+    coordinates: newCoordinates,
+  };
 };
 
-const moveDown = (width: number, height: number, coordinates: Coordinates[]) => {
+const moveDown = (
+  width: number,
+  height: number,
+  coordinates: Coordinates[],
+  target: Coordinates,
+) => {
   const newCoordinates = [...coordinates].reduceRight((coords, cur, i, array) => {
     if (i !== 0) {
       return [array[i - 1]].concat(coords);
@@ -66,10 +100,18 @@ const moveDown = (width: number, height: number, coordinates: Coordinates[]) => 
     return [{ ...cur, row }].concat(coords);
   }, [] as Coordinates[]);
 
-  return { grid: generateGrid({ width, height }, newCoordinates), coordinates: newCoordinates };
+  return {
+    grid: generateGrid({ width, height }, newCoordinates, target),
+    coordinates: newCoordinates,
+  };
 };
 
-const moveLeft = (width: number, height: number, coordinates: Coordinates[]) => {
+const moveLeft = (
+  width: number,
+  height: number,
+  coordinates: Coordinates[],
+  target: Coordinates,
+) => {
   const newCoordinates = [...coordinates].reduceRight((coords, cur, i, array) => {
     if (i !== 0) {
       return [array[i - 1]].concat(coords);
@@ -82,10 +124,18 @@ const moveLeft = (width: number, height: number, coordinates: Coordinates[]) => 
     return [{ ...cur, col }].concat(coords);
   }, [] as Coordinates[]);
 
-  return { grid: generateGrid({ width, height }, newCoordinates), coordinates: newCoordinates };
+  return {
+    grid: generateGrid({ width, height }, newCoordinates, target),
+    coordinates: newCoordinates,
+  };
 };
 
-const moveRight = (width: number, height: number, coordinates: Coordinates[]) => {
+const moveRight = (
+  width: number,
+  height: number,
+  coordinates: Coordinates[],
+  target: Coordinates,
+) => {
   const newCoordinates = [...coordinates].reduceRight((coords, cur, i, array) => {
     if (i !== 0) {
       return [array[i - 1]].concat(coords);
@@ -98,5 +148,8 @@ const moveRight = (width: number, height: number, coordinates: Coordinates[]) =>
     return [{ ...cur, col }].concat(coords);
   }, [] as Coordinates[]);
 
-  return { grid: generateGrid({ width, height }, newCoordinates), coordinates: newCoordinates };
+  return {
+    grid: generateGrid({ width, height }, newCoordinates, target),
+    coordinates: newCoordinates,
+  };
 };
