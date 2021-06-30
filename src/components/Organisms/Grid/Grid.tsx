@@ -19,6 +19,7 @@ type State = {
   grid: number[][];
   direction: keyof typeof Keys;
   target: Coordinates;
+  hasEnded: boolean;
 };
 
 const initialState: State = {
@@ -33,6 +34,7 @@ const initialState: State = {
   grid: [],
   direction: 'right',
   target: { row: 10, col: 10 },
+  hasEnded: false,
 };
 
 type Action =
@@ -42,7 +44,8 @@ type Action =
   | { type: 'left' }
   | { type: 'right' }
   | { type: 'move' }
-  | { type: 'eat' };
+  | { type: 'eat' }
+  | { type: 'end' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -79,6 +82,9 @@ function reducer(state: State, action: Action): State {
         ...setTarget(state.grid, state.coordinates),
       };
     }
+    case 'end': {
+      return { ...state, hasEnded: true };
+    }
     default: {
       throw new Error('[Grid] Action does not exist');
     }
@@ -96,9 +102,11 @@ function Grid(props: Props) {
   }, [props]);
 
   useEffect(() => {
-    const intervalId = setInterval(() => dispatch({ type: 'move' }), 100);
-    return () => clearInterval(intervalId);
-  }, []);
+    if (!state.hasEnded) {
+      const intervalId = setInterval(() => dispatch({ type: 'move' }), 100);
+      return () => clearInterval(intervalId);
+    }
+  }, [state.hasEnded]);
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
@@ -123,9 +131,17 @@ function Grid(props: Props) {
     }
   };
 
+  const head = state.coordinates[0];
+  const tail = state.coordinates.slice(1);
+
+  if (tail.some((x) => x.row === head.row && x.col === head.col && !state.hasEnded)) {
+    dispatch({ type: 'end' });
+  }
+
   if (
     state.coordinates[0].col === state.target.col &&
-    state.coordinates[0].row === state.target.row
+    state.coordinates[0].row === state.target.row &&
+    !state.hasEnded
   ) {
     dispatch({ type: 'eat' });
   }
