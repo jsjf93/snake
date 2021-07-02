@@ -32,7 +32,7 @@ export const setTarget = (grid: number[][], coordinates: Coordinates[]) => {
     const row = ~~(Math.random() * newGrid.length);
     const col = ~~(Math.random() * newGrid[0].length);
 
-    if (coordinates.every((x) => x.row !== row && x.col !== col)) {
+    if (!coordinates.some((x) => x.row === row && x.col === col)) {
       calculatingCoordinates = false;
       newGrid[row][col] = 2;
       targetCoordinates = { row, col };

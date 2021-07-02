@@ -1,16 +1,17 @@
 import React, { useEffect, useReducer, useRef } from 'react';
+import styled from 'styled-components';
 import { Direction, Keys } from '../../../constants';
 import { generateGrid, move, setTarget } from '../../../helpers/gridHelpers';
+import { Coordinates } from '../../../types';
 import TileRow from '../../Molecules/Grid/TileRow/TileRow';
+
+const Wrapper = styled.div`
+  text-align: center;
+`;
 
 type Props = {
   width: number;
   height: number;
-};
-
-type Coordinates = {
-  row: number;
-  col: number;
 };
 
 type State = {
@@ -76,10 +77,12 @@ function reducer(state: State, action: Action): State {
       return { ...state, coordinates, grid, previousTailCoordinate };
     }
     case 'eat': {
+      const coordinates = state.coordinates.concat(state.previousTailCoordinate);
+      const data = setTarget(state.grid, coordinates);
       return {
         ...state,
-        coordinates: state.coordinates.concat(state.previousTailCoordinate),
-        ...setTarget(state.grid, state.coordinates),
+        coordinates,
+        ...data,
       };
     }
     case 'end': {
@@ -111,18 +114,19 @@ function Grid(props: Props) {
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
       dispatch({ type: Direction.up });
-    }
-    if (event.key === Keys.down && state.direction !== 'up' && state.direction !== Direction.down) {
+    } else if (
+      event.key === Keys.down &&
+      state.direction !== 'up' &&
+      state.direction !== Direction.down
+    ) {
       dispatch({ type: Direction.down });
-    }
-    if (
+    } else if (
       event.key === Keys.left &&
       state.direction !== 'right' &&
       state.direction !== Direction.left
     ) {
       dispatch({ type: Direction.left });
-    }
-    if (
+    } else if (
       event.key === Keys.right &&
       state.direction !== 'left' &&
       state.direction !== Direction.right
@@ -134,24 +138,24 @@ function Grid(props: Props) {
   const head = state.coordinates[0];
   const tail = state.coordinates.slice(1);
 
-  if (tail.some((x) => x.row === head.row && x.col === head.col && !state.hasEnded)) {
-    dispatch({ type: 'end' });
-  }
-
   if (
     state.coordinates[0].col === state.target.col &&
     state.coordinates[0].row === state.target.row &&
     !state.hasEnded
   ) {
     dispatch({ type: 'eat' });
+  } else if (tail.some((x) => x.row === head.row && x.col === head.col && !state.hasEnded)) {
+    dispatch({ type: 'end' });
   }
 
   return (
-    <div ref={ref} tabIndex={0} onKeyDown={handleKeyPress}>
+    <Wrapper ref={ref} tabIndex={0} onKeyDown={handleKeyPress}>
       {state.grid.map((tiles, index) => (
         <TileRow key={index} tiles={tiles} />
       ))}
-    </div>
+      {<p>{state.coordinates.length}</p>}
+      {state.hasEnded && <p>Game over</p>}
+    </Wrapper>
   );
 }
 
