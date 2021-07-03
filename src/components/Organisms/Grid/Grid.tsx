@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import styled from 'styled-components';
 import { Direction, Keys } from '../../../constants';
 import { generateGrid, move, setTarget } from '../../../helpers/gridHelpers';
@@ -140,6 +141,29 @@ function Grid(props: Props) {
     }
   }, [state.hasEnded]);
 
+  const gestureHandlers = useSwipeable({
+    onSwipedUp: (eventData) => {
+      if (state.direction !== 'down' && state.direction !== Direction.up) {
+        dispatch({ type: Direction.up });
+      }
+    },
+    onSwipedDown: (eventData) => {
+      if (state.direction !== 'up' && state.direction !== Direction.down) {
+        dispatch({ type: Direction.down });
+      }
+    },
+    onSwipedLeft: (eventData) => {
+      if (state.direction !== 'right' && state.direction !== Direction.left) {
+        dispatch({ type: Direction.left });
+      }
+    },
+    onSwipedRight: (eventData) => {
+      if (state.direction !== 'left' && state.direction !== Direction.right) {
+        dispatch({ type: Direction.right });
+      }
+    },
+  });
+
   const head = state.coordinates[0];
   const tail = state.coordinates.slice(1);
 
@@ -154,7 +178,7 @@ function Grid(props: Props) {
   }
 
   return (
-    <Wrapper>
+    <Wrapper {...gestureHandlers}>
       {state.grid.map((tiles, index) => (
         <TileRow key={index} tiles={tiles} />
       ))}
