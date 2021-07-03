@@ -162,6 +162,7 @@ function Grid(props: Props) {
         dispatch({ type: Direction.right });
       }
     },
+    preventDefaultTouchmoveEvent: true,
   });
 
   const head = state.coordinates[0];
