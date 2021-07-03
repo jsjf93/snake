@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 import styled from 'styled-components';
 import { Direction, Keys } from '../../../constants';
 import { generateGrid, move, setTarget } from '../../../helpers/gridHelpers';
@@ -78,11 +78,11 @@ function reducer(state: State, action: Action): State {
     }
     case 'eat': {
       const coordinates = state.coordinates.concat(state.previousTailCoordinate);
-      const data = setTarget(state.grid, coordinates);
+
       return {
         ...state,
         coordinates,
-        ...data,
+        ...setTarget(state.grid, coordinates),
       };
     }
     case 'end': {
@@ -97,11 +97,40 @@ function reducer(state: State, action: Action): State {
 function Grid(props: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const ref = useRef<HTMLDivElement>(null);
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
+        dispatch({ type: Direction.up });
+      } else if (
+        event.key === Keys.down &&
+        state.direction !== 'up' &&
+        state.direction !== Direction.down
+      ) {
+        dispatch({ type: Direction.down });
+      } else if (
+        event.key === Keys.left &&
+        state.direction !== 'right' &&
+        state.direction !== Direction.left
+      ) {
+        dispatch({ type: Direction.left });
+      } else if (
+        event.key === Keys.right &&
+        state.direction !== 'left' &&
+        state.direction !== Direction.right
+      ) {
+        dispatch({ type: Direction.right });
+      }
+    },
+    [state.direction],
+  );
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleKeyPress]);
 
   useEffect(() => {
     dispatch({ type: 'load', payload: props });
-    ref?.current?.focus();
   }, [props]);
 
   useEffect(() => {
@@ -110,30 +139,6 @@ function Grid(props: Props) {
       return () => clearInterval(intervalId);
     }
   }, [state.hasEnded]);
-
-  const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === Keys.up && state.direction !== 'down' && state.direction !== Direction.up) {
-      dispatch({ type: Direction.up });
-    } else if (
-      event.key === Keys.down &&
-      state.direction !== 'up' &&
-      state.direction !== Direction.down
-    ) {
-      dispatch({ type: Direction.down });
-    } else if (
-      event.key === Keys.left &&
-      state.direction !== 'right' &&
-      state.direction !== Direction.left
-    ) {
-      dispatch({ type: Direction.left });
-    } else if (
-      event.key === Keys.right &&
-      state.direction !== 'left' &&
-      state.direction !== Direction.right
-    ) {
-      dispatch({ type: Direction.right });
-    }
-  };
 
   const head = state.coordinates[0];
   const tail = state.coordinates.slice(1);
@@ -149,11 +154,11 @@ function Grid(props: Props) {
   }
 
   return (
-    <Wrapper ref={ref} tabIndex={0} onKeyDown={handleKeyPress}>
+    <Wrapper>
       {state.grid.map((tiles, index) => (
         <TileRow key={index} tiles={tiles} />
       ))}
-      {<p>{state.coordinates.length}</p>}
+      {<p>Score: {state.coordinates.length - 5}</p>}
       {state.hasEnded && <p>Game over</p>}
     </Wrapper>
   );
