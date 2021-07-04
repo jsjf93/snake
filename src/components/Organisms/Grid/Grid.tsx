@@ -10,6 +10,16 @@ const Wrapper = styled.div`
   text-align: center;
 `;
 
+const GameOverDiv = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+`;
+
+const P = styled.p`
+  margin-right: 10px;
+`;
+
 type Props = {
   width: number;
   height: number;
@@ -47,7 +57,8 @@ type Action =
   | { type: 'right' }
   | { type: 'move' }
   | { type: 'eat' }
-  | { type: 'end' };
+  | { type: 'end' }
+  | { type: 'restart'; payload: { initialState: State; props: Props } };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -88,6 +99,19 @@ function reducer(state: State, action: Action): State {
     }
     case 'end': {
       return { ...state, hasEnded: true };
+    }
+    case 'restart': {
+      const grid = generateGrid(
+        action.payload.props,
+        action.payload.initialState.coordinates,
+        action.payload.initialState.target,
+      );
+
+      return {
+        ...action.payload.initialState,
+        ...setTarget(grid, action.payload.initialState.coordinates),
+        hasEnded: false,
+      };
     }
     default: {
       throw new Error('[Grid] Action does not exist');
@@ -184,7 +208,14 @@ function Grid(props: Props) {
         <TileRow key={index} tiles={tiles} />
       ))}
       {<p>Score: {state.coordinates.length - 5}</p>}
-      {state.hasEnded && <p>Game over</p>}
+      {state.hasEnded && (
+        <GameOverDiv>
+          <P>Game over.</P>
+          <button onClick={() => dispatch({ type: 'restart', payload: { initialState, props } })}>
+            Restart?
+          </button>
+        </GameOverDiv>
+      )}
     </Wrapper>
   );
 }
